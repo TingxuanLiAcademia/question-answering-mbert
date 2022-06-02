@@ -349,7 +349,7 @@ def main():
         column_names = raw_datasets["test"].column_names
     question_column_name = "question" if "question" in column_names else column_names[0]
     context_column_name = "context" if "context" in column_names else column_names[1]
-    answer_column_name = "answers" if "answers" in column_names else column_names[2]
+    answer_column_name = "answer" if "answer" in column_names else column_names[2]
 
     # Padding side determines if we do (question|context) or (context|question).
     pad_on_right = tokenizer.padding_side == "right"
@@ -402,16 +402,18 @@ def main():
             sequence_ids = tokenized_examples.sequence_ids(i)
 
             # One example can give several spans, this is the index of the example containing this span of text.
+            #LEO 2022/05/25注：sample_mapping就是一个0～999的list，虽然不知道为什么只有1000个元素。是batch？
             sample_index = sample_mapping[i]
             answers = examples[answer_column_name][sample_index]
+
             # If no answers are given, set the cls_index as answer.
-            if len(answers["answer_start"]) == 0:
+            if len(answers) == 0:
                 tokenized_examples["start_positions"].append(cls_index)
                 tokenized_examples["end_positions"].append(cls_index)
             else:
                 # Start/end character index of the answer in the text.
-                start_char = answers["answer_start"][0]
-                end_char = start_char + len(answers["text"][0])
+                start_char = examples["answer_start"][sample_index]
+                end_char = start_char + len(answers)
 
                 # Start token index of the current span in the text.
                 token_start_index = 0
@@ -498,7 +500,7 @@ def main():
 
             # One example can give several spans, this is the index of the example containing this span of text.
             sample_index = sample_mapping[i]
-            tokenized_examples["example_id"].append(examples["id"][sample_index])
+            tokenized_examples["example_id"].append(examples["qid"][sample_index])
 
             # Set to None the offset_mapping that are not part of the context so it's easy to determine if a token
             # position is part of the context or not.
@@ -586,7 +588,7 @@ def main():
         else:
             formatted_predictions = [{"id": k, "prediction_text": v} for k, v in predictions.items()]
 
-        references = [{"id": ex["id"], "answers": ex[answer_column_name]} for ex in examples]
+        references = [{"id": ex["qid"], "answers": ex[answer_column_name]} for ex in examples]
         return EvalPrediction(predictions=formatted_predictions, label_ids=references)
 
     metric = load_metric("squad_v2" if data_args.version_2_with_negative else "squad")
@@ -604,7 +606,7 @@ def main():
         tokenizer=tokenizer,
         data_collator=data_collator,
         post_process_function=post_processing_function,
-        compute_metrics=compute_metrics,
+        #compute_metrics=compute_metrics,
     )
 
     # Training

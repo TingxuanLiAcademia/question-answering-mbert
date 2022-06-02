@@ -81,7 +81,7 @@ def postprocess_qa_predictions(
         raise ValueError(f"Got {len(predictions[0])} predictions and {len(features)} features.")
 
     # Build a map example to its corresponding features.
-    example_id_to_index = {k: i for i, k in enumerate(examples["id"])}
+    example_id_to_index = {k: i for i, k in enumerate(examples["qid"])}
     features_per_example = collections.defaultdict(list)
     for i, feature in enumerate(features):
         features_per_example[example_id_to_index[feature["example_id"]]].append(i)
@@ -207,14 +207,14 @@ def postprocess_qa_predictions(
 
             # Then we compare to the null prediction using the threshold.
             score_diff = null_score - best_non_null_pred["start_logit"] - best_non_null_pred["end_logit"]
-            scores_diff_json[example["id"]] = float(score_diff)  # To be JSON-serializable.
+            scores_diff_json[example["qid"]] = float(score_diff)  # To be JSON-serializable.
             if score_diff > null_score_diff_threshold:
-                all_predictions[example["id"]] = ""
+                all_predictions[example["qid"]] = ""
             else:
-                all_predictions[example["id"]] = best_non_null_pred["text"]
+                all_predictions[example["qid"]] = best_non_null_pred["text"]
 
         # Make `predictions` JSON-serializable by casting np.float back to float.
-        all_nbest_json[example["id"]] = [
+        all_nbest_json[example["qid"]] = [
             {k: (float(v) if isinstance(v, (np.float16, np.float32, np.float64)) else v) for k, v in pred.items()}
             for pred in predictions
         ]
