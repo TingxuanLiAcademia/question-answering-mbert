@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=1 python run_qa_mod.py \
+CUDA_VISIBLE_DEVICES=1 python run_qa.py \
   --model_name_or_path bert-base-multilingual-uncased \
   --train_file ./dataset/train_factoid/train_v2.4_mod_neo.json\
   --test_file ./dataset/test_factoid/test_v2.4_neo.json\
